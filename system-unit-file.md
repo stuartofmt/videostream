@@ -1,5 +1,5 @@
 # systemctl unit file example
- 
+
 This document briefly describes setting up a unit file so that VideoStreamer will begin running after boot.
 It is accurate for Debian Buster but there may be differences for other distributions - so this document is only guidance.
 ---
