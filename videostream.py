@@ -30,18 +30,17 @@ def init():
                         help='Specify the port on which the server listens. Default = 0')
     parser.add_argument('-rotate', type=str, nargs=1, default=['0'], help='Rotation. Default = 0')
     parser.add_argument('-camera', type=str, nargs=1, default=[''], help='camera index.')
-    parser.add_argument('-width', type=int, nargs=1, default=[0], help='image width.')
-    parser.add_argument('-height', type=int, nargs=1, default=[0], help='image height.')
+    parser.add_argument('-size', type=int, nargs=1, default=[0], help='image resolution')
     args = vars(parser.parse_args())
 
-    global host, port, rotate, camera, width, height
+    global host, port, rotate, camera, size
 
     host = args['host'][0]
     port = args['port'][0]
     rotate = args['rotate'][0]
     camera = args['camera'][0]
-    width = abs(args['width'][0])
-    height = abs(args['height'][0])
+    size = abs(args['size'][0])
+
 
 class StreamingHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -75,8 +74,7 @@ class StreamingHandler(SimpleHTTPRequestHandler):
                         print('\nClient Disconnected')
                         break
             except Exception as e:
-                print(
-                    '\nRemoved client from ' + str(self.client_address) + ' with error ' + str(e))
+                print('\nRemoved client from ' + str(self.client_address) + ' with error ' + str(e))
         elif self.path == '/terminate':
             self.send_response(200)
             self.end_headers()
@@ -84,6 +82,63 @@ class StreamingHandler(SimpleHTTPRequestHandler):
         else:
             self.send_error(404)
             self.end_headers()
+
+def getResolution(size):
+    global stream
+    resolution = []  #  Note: needs to be ordered in size to support later comparisons
+    resolution.append([2048, 1080])  # Default
+    resolution.append([1920, 1800])
+    resolution.append([1280, 720])
+    resolution.append([800, 600])
+    resolution.append([720, 480])
+    resolution.append([640, 480])
+    resolution.append([320, 240])
+
+    available_resolutions = []
+    available_resolutions_str = []
+    for res in resolution:
+        width = res[0]
+        height = res[1]
+        # Try setting
+        stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        #  See what is reported back
+        camwidth = int(stream.get(cv2.CAP_PROP_FRAME_WIDTH))
+        camheight = int(stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        reported_resolution = [camwidth, camheight]
+        if reported_resolution not in available_resolutions:
+            available_resolutions.append(reported_resolution)
+            available_resolutions_str.append(str(camwidth) + 'x' + str(camheight))
+    print('The following resolutions are available from the camera: ' + '  '.join(available_resolutions_str))
+
+    if size > len(resolution)-1: # Make sure the index is within bounds
+        size = len(resolution)-1
+
+    requested_resolution =  resolution[size]
+    if requested_resolution in available_resolutions:
+        print('Requested Resolution is available')
+        return requested_resolution[0], requested_resolution[1]
+    else:
+        for res in available_resolutions:
+            if res[0] <= requested_resolution[0] and res[1] <= requested_resolution[1]:
+                print('The requested resolution: ' + str(requested_resolution[0]) + 'x' + str(requested_resolution[1]) + ' is not available')
+                print('Using a lower, available resolution')
+                return res[0], res[1]
+
+        fallback_resolution = resolution[len(resolution)-1]
+        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+        print('There was no resolution match available')
+        print('Trying the lowest resolution: ' + str(fallback_resolution[0]) + 'x' + str(fallback_resolution[1]))
+        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+        return fallback_resolution[0], fallback_resolution[1]
+
+def setResolution(size):
+    width, height = getResolution(size)
+    global stream
+    print('Setting the camera resolution to: ' + str(width) + 'x' + str(height))
+    stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    stream.set(cv2.CAP_PROP_FPS, 24)  #  Should be a reasonable number
 
 def checkIP():
     #  Start the web server
@@ -165,21 +220,7 @@ if __name__ == "__main__":
     if camera in available_cameras:
         print('\nOpening camera with identifier: '+ camera)
         stream = cv2.VideoCapture(int(camera))
-        stream.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
-        stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
-        stream.set(cv2.CAP_PROP_FPS, 24)
-        # Find default width of camera
-        ret, buffer = stream.read()
-        camheight = buffer.shape[0]
-        camwidth = buffer.shape[1]
-        print('\nThe default camera resolution is: ' + str(camwidth) + ' x ' + str(camheight) + ' pixels')
-        if (width == 0 and height != 0) or (width != 0 and height == 0):
-            print('\nIf -width or -height are specified - BOTH must be specified')
-            print('Using the default camera resolution')
-        elif(width != 0 and height != 0):
-            print('\nSetting the camera resolution to: ' + str(width) + ' x ' + str(height) + ' pixels')
-            stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-            stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        setResolution(size)
     else:
         if camera == '':
             print('You did not specify a camera and more than one was found.')
