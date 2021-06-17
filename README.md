@@ -15,12 +15,13 @@ It is particularly useful when you want to same video feed to be consumed by mor
 ## General Description
 
 The main capabilities include:
-1.  Supports USB cameras (most should work).
-2.  Supports integrated Pi Camera and likely other integrated cameras (e.g. from a laptop).
-3.  Is light in its use of system resources
-4.  Allows camera selection if more than one camera is available.
-5.  Allows video size selections.
-6.  Allows video rotation.
+1.  Automatically scans for available cameras and determines the resolutions it / they support.
+2.  Supports USB cameras (most should work).
+3.  Supports integrated Pi Camera and likely other integrated cameras (e.g. from a laptop).
+4.  Is light in its use of system resources
+5.  Allows camera selection if more than one camera is available.
+6.  Allows video size selections.
+7.  Allows video rotation.
 
 ## Requirements 
 
