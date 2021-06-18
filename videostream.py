@@ -138,7 +138,7 @@ def setResolution(size):
     print('Setting the camera resolution to: ' + str(width) + 'x' + str(height))
     stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    stream.set(cv2.CAP_PROP_FPS, 24)  #  Should be a reasonable number
+    stream.set(cv2.CAP_PROP_FPS, 12)  #  Should be a reasonable number
 
 def checkIP():
     #  Start the web server
