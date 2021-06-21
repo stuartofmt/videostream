@@ -1,6 +1,5 @@
 # videostream
 
-
 This is a simple video streamer for use with the usb and integrated cameras including the Pi camera.  It streams video in jpg format from a url.
 It is particularly useful when you want to same video feed to be consumed by more than one application.  For example a timelapse recording application and to also monitor in real time.
 
