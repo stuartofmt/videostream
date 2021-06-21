@@ -1,6 +1,6 @@
 # systemctl unit file example
 
-This document briefly describes setting up a unit file so that VideoStreamer will begin running after boot.
+This document briefly describes setting up a unit file so that videostream will begin running after boot.
 It is accurate for Debian Buster but there may be differences for other distributions - so this document is only guidance.
 ---
 
@@ -10,15 +10,15 @@ They are set in a way that will automatically restart the program if it is manua
 In other words - they are set to try and keep an instance of the program running at all times.
 
 ```
-wget https://github.com/stuartofmt/VideoStreamer/raw/master/VideoStreamer.service
+wget https://github.com/stuartofmt/videostream/raw/master/videostream.service
 ```
 
 
 Edit the example file paying particular attention to the following:
 ```
-WorkingDir=/home/pi/VideoStreamer
+WorkingDir=/home/pi/videostream
 ```
-This needs to be the directory in which you have VideoStreamer.py installed.  If you are using startDuetLapse3.py it will be in the same directory as DuetLapse3. 
+This needs to be the directory in which you have videostream.py installed. 
 ```
 User=pi
 ```
@@ -29,7 +29,7 @@ You should have tested this from the command line and be confident that it works
 
 **Example**
 ```
-ExecStart=python3 /home/pi/VideoStreamer/VideoStreamer.py -port 8090 - camera 1 - rotate 180 -size 4
+ExecStart=python3 /home/pi/videostream/videostream.py -port 8090 - camera 1 - rotate 180 -size 4
 ```
 ----
 Determine where your systemctl files are. Usually this will be somewhere like /lib/systemd/system.<br>
