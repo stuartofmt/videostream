@@ -1,10 +1,10 @@
-# VideoStreamer
+# videostream
 
 
 This is a simple video streamer for use with the usb and integrated Cameras including the Pi Camera.  It streams video in jpg format from a url.
 It is particularly useful when you want to same video feed to be consumed by more than one application.  For example a timelapse recording application and to also monitor in real time.
 
-<br>VideoStreamer is designed to run continuously and can accept a http command to terminate the program.  Typically, you would use a browser but curl or other means can be used.<br>
+<br>videostream is designed to run continuously and can accept a http command to terminate the program.  Typically, you would use a browser but curl or other means can be used.<br>
 
 
 ###Version 1.0.0
@@ -64,12 +64,12 @@ sudo pip3 install opencv-contrib-python==3.4.4.19
 
 For Linux:<br>
 
-cd to a directory of your choice.  It is usually simpler if your chosen directory is only used for VideoStreamer.
+cd to a directory of your choice.  It is usually simpler if your chosen directory is only used for videostream.
 
 ```
-wget https://github.com/stuartofmt/VideoStreamer/blob/master/videostream.py
+wget https://github.com/stuartofmt/VideoStreamer/raw/master/VideoStreamer.py
 
-chmod 744 VideoStreamer.py
+chmod 744 videostream.py
 ```
 
 
@@ -81,28 +81,28 @@ Take note of editing the path variable(s) so that python3 and its libraries / mo
 
 
 ## Starting
-Once installation is complete - you will normally start VideoStreamer in one of the following ways.
+Once installation is complete - you will normally start videostream in one of the following ways.
 
-VideoStreamer requires a port number using the -port option  This is mandatory.<br>
+videostream requires a port number using the -port option  This is mandatory.<br>
 Other options for startup are described in the ##Startup Options## section below.
 
-VideoStreamer can be started from the command line or, more usually using systemctl (not available on Win10 or WSL) or equivalent
+videostream can be started from the command line or, more usually using systemctl (not available on Win10 or WSL) or equivalent
 .<br>
 It is usually run in the background.<br>
 A sample service file for use with systemctl is included  here:<br>
-https://github.com/stuartofmt/VideoStreamer/blob/master/VideoStreamer.service
+https://github.com/stuartofmt/videostream/blob/master/videostream.service
 <br>Instructions for using are here:<br>
-https://github.com/stuartofmt/VideoStreamer/blob/master/system-unit-file.md
+https://github.com/stuartofmt/videostream/blob/master/system-unit-file.md
 
 
-Example command line for running VideoStreamer in the background (linux)
+Example command line for running videostream in the background (linux)
 ```
-python3 ./VideoStreamer.py -port 8090 &
+python3 ./videostream.py -port 8090 &
 ```
 or if you plan to close the command console - use nohup
 
 ```
-nohup python3 ./VideoStreamer.py -port 8090 &
+nohup python3 ./videostream.py -port 8090 &
 ```
 
 On Windows things are slightly different - note the use of pythonw
@@ -111,17 +111,17 @@ which will run python in the background (tested with python 3.9)
 Note the use of pythonw and the output files to check if everything was successful
 
 ```
-pythonw VideoStreamer.py -port 8090 > VideoStreamer.log 2>&1
+pythonw videostream.py -port 8090 > videostream.log 2>&1
 
 ```
 
 If the program is run in foreground it can be shutdown using CTRL+C (on linux) or CTRL+Break (on Windows).<br>
 If the program is run in background it can be stopped using http with /terminate (see the section on **Usage** below).<br>
 
-**Note that the http listener will stop responding if VideoStreamer is run from a command console that is then closed.
+**Note that the http listener will stop responding if videostream is run from a command console that is then closed.
 This will happen even if started in background.<br>
 To avoid this - use nohup (linux) or start with pythonw (on Windows)<br>
-An alternative if you are on Win10 is to use  Windows Subsystem for Linux (WSL) and run VideoStreamer as a linux application inside WSL.<br>**
+An alternative if you are on Win10 is to use  Windows Subsystem for Linux (WSL) and run videostream as a linux application inside WSL.<br>**
 
 ### Usage
 
@@ -143,20 +143,20 @@ http://<ipaddress>:<port>/terminate]
 ```
 ---
 ### Startup Options
-From the directory where VideoStream.py is installed:<br>
+From the directory where videostream.py is installed:<br>
 
 Options can be viewed with
 ```
-python3 ./VideoStreamer.py -h  # For Linux
+python3 ./videostream.py -h  # For Linux
 
-python3 VideoStreamer.py -h  # For Windows
+python3 videostream.py -h  # For Windows
 ```
 
 The response will give the version number at the top.
 
 ----
 
-VideoStream supports startup options in the form:
+videostream supports startup options in the form:
 
 python3 ./videostream.py -port [-camera] [-rotate] [-size] [-host]
 
