@@ -1,7 +1,7 @@
 # videostream
 
 
-This is a simple video streamer for use with the usb and integrated Cameras including the Pi Camera.  It streams video in jpg format from a url.
+This is a simple video streamer for use with the usb and integrated cameras including the Pi camera.  It streams video in jpg format from a url.
 It is particularly useful when you want to same video feed to be consumed by more than one application.  For example a timelapse recording application and to also monitor in real time.
 
 <br>videostream is designed to run continuously and can accept a http command to terminate the program.  Typically, you would use a browser but curl or other means can be used.<br>
@@ -67,7 +67,7 @@ For Linux:<br>
 cd to a directory of your choice.  It is usually simpler if your chosen directory is only used for videostream.
 
 ```
-wget https://github.com/stuartofmt/VideoStreamer/raw/master/VideoStreamer.py
+wget https://github.com/stuartofmt/videostream/raw/master/videostream.py
 
 chmod 744 videostream.py
 ```
