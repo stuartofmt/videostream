@@ -67,7 +67,7 @@ For Linux:<br>
 cd to a directory of your choice.  It is usually simpler if your chosen directory is only used for VideoStreamer.
 
 ```
-wget https://github.com/stuartofmt/VideoStreamer/raw/master/VideoStreamer.py
+wget https://github.com/stuartofmt/VideoStreamer/blob/master/videostream.py
 
 chmod 744 VideoStreamer.py
 ```
