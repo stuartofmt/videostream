@@ -13,8 +13,11 @@ It is particularly useful when you want to same video feed to be consumed by mor
 ###Version 1.1.0
 
 [1]  Improved the detection of size and formats
+
 [2]  Can now select a preferred format
-[3]  Improved the fallback to a lower size if the selected size is not available
+
+[3]  Improved the fallback to a lower size if the selected size is not available.
+
 [4]  If the preferred format is not available an available format will be used. 
 
 
