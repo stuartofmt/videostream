@@ -10,6 +10,13 @@ It is particularly useful when you want to same video feed to be consumed by mor
 
 [1]  Initial version
 
+###Version 1.1.0
+
+[1]  Improved the detection of size and formats
+[2]  Can now select a preferred format
+[3]  Improved the fallback to a lower size if the selected size is not available
+[4]  If the preferred format is not available an available format will be used. 
+
 
 ## General Description
 
@@ -21,6 +28,7 @@ The main capabilities include:
 5.  Allows camera selection if more than one camera is available.
 6.  Allows video size selections.
 7.  Allows video rotation.
+8.  Allows video format selection
 
 ## Requirements 
 
@@ -157,7 +165,7 @@ The response will give the version number at the top.
 
 videostream supports startup options in the form:
 
-python3 ./videostream.py -port [-camera] [-rotate] [-size] [-host]
+python3 ./videostream.py -port [-camera] [-rotate] [-size] [-format][-host]
 
 Each option is preceded by a dash - without any space between the dash and the option. Some options have parameters described in the square brackets.   The square brackets are NOT used in entering the options. If an option is not specified, the default used.
 
@@ -218,6 +226,23 @@ If your camera does not support that resolution, the program will set the next l
 Example
 ```
 -size 4      #Causes the program to try to use a resolution of 720 x 480
+```
+
+####-format [option]
+If omitted - the program will try to use MJPG.<br>
+The available formats are from the list below.
+
+
+BGR3, YUY2, MJPG, JPEG
+
+If you specify the -format  - the program will try to use that format.<br>
+If your camera does not support that format, the program will select one of the available formats that are supported.
+
+**Note: Some cameras may report that it supports a format when, in fact, it does not.**  In such cases, try other settings.
+
+Example
+```
+-format BGR3      #Causes the program to try to use the BGR3 format
 ```
 
 #### -host [ip address]

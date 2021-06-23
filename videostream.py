@@ -5,6 +5,8 @@
 # Released under The MIT License. Full text available via https://opensource.org/licenses/MIT
 # Updated to use threadingHTTPServer and SimpleHTTPhandler
 
+videostream_version = '1.1.0'
+
 import argparse
 import cv2
 import imutils
@@ -31,9 +33,10 @@ def init():
     parser.add_argument('-rotate', type=str, nargs=1, default=['0'], help='Rotation. Default = 0')
     parser.add_argument('-camera', type=str, nargs=1, default=[''], help='camera index.')
     parser.add_argument('-size', type=int, nargs=1, default=[0], help='image resolution')
+    parser.add_argument('-format', type=str, nargs=1, default=['MJPG'], help='Preferred format')
     args = vars(parser.parse_args())
 
-    global host, port, rotate, camera, size
+    global host, port, rotate, camera, size, format, allowed_formats
 
     host = args['host'][0]
     port = args['port'][0]
@@ -41,6 +44,12 @@ def init():
     camera = args['camera'][0]
     size = abs(args['size'][0])
 
+    format = args['format'][0]
+    allowed_formats = ('BGR3', 'YUY2', 'MJPG','JPEG')
+    if format not in allowed_formats:
+        print(format + 'is not an allowed format')
+        format = 'MJPG'
+        print('Setting to ' + format)
 
 class StreamingHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -84,7 +93,6 @@ class StreamingHandler(SimpleHTTPRequestHandler):
             self.end_headers()
 
 def getResolution(size):
-    global stream
     resolution = []  #  Note: needs to be ordered in size to support later comparisons
     resolution.append([2048, 1080])  # Default
     resolution.append([1920, 1800])
@@ -93,51 +101,93 @@ def getResolution(size):
     resolution.append([720, 480])
     resolution.append([640, 480])
     resolution.append([320, 240])
+    allowed_formats = ('BGR3', 'YUY2', 'MJPG','JPEG')
 
     available_resolutions = []
     available_resolutions_str = []
+    print('Scanning for available sizes and formats - be patient')
     for res in resolution:
         width = res[0]
         height = res[1]
-        # Try setting
-        stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        #  See what is reported back
-        camwidth = int(stream.get(cv2.CAP_PROP_FRAME_WIDTH))
-        camheight = int(stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        reported_resolution = [camwidth, camheight]
-        if reported_resolution not in available_resolutions:
-            available_resolutions.append(reported_resolution)
-            available_resolutions_str.append(str(camwidth) + 'x' + str(camheight))
+        for form in allowed_formats:
+            stream = cv2.VideoCapture(int(camera))
+            stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+            stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+            fourcc = cv2.VideoWriter_fourcc(*form)
+            stream.set(cv2.CAP_PROP_FOURCC,fourcc)
+            camwidth = int(stream.get(cv2.CAP_PROP_FRAME_WIDTH))
+            camheight = int(stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            cc = stream.get(cv2.CAP_PROP_FOURCC)
+            camformat = "".join([chr((int(cc) >> 8 * i) & 0xFF) for i in range(4)])
+            reported_resolution = [camwidth, camheight, camformat]
+            if reported_resolution not in available_resolutions and camformat in allowed_formats:
+                available_resolutions.append(reported_resolution)
+                available_resolutions_str.append(str(camwidth) + 'x' + str(camheight) + '(' + camformat + ')')
+            stream.release()
     print('The following resolutions are available from the camera: ' + '  '.join(available_resolutions_str))
 
     if size > len(resolution)-1: # Make sure the index is within bounds
         size = len(resolution)-1
+        print('Selected size is not available. Defaulting to the smallest size')
 
-    requested_resolution =  resolution[size]
-    if requested_resolution in available_resolutions:
-        print('Requested Resolution is available')
-        return requested_resolution[0], requested_resolution[1]
-    else:
-        for res in available_resolutions:
-            if res[0] <= requested_resolution[0] and res[1] <= requested_resolution[1]:
-                print('The requested resolution: ' + str(requested_resolution[0]) + 'x' + str(requested_resolution[1]) + ' is not available')
-                print('Using a lower, available resolution')
-                return res[0], res[1]
+    requested_width = resolution[size][0]
+    requested_height = resolution[size][1]
+    requested_res = [requested_width, requested_height, format]
+    print(requested_res)
+    #  Test to see if we have a match in resolution
+    test_res = [res for res in available_resolutions if requested_width == res[0] and requested_height == res[1]]
+    print(test_res)
+    if test_res:
+        print('The requested size: ' + str(requested_width) + 'x' + str(requested_height) + ' is available')
+        test_format = [form[2] for form in test_res if format == form[2]]
+        if test_format:
+            print('The requested format: ' + format + ' is available')
+            return requested_res
+        else:
+            print('The requested format: ' + format + ' is not available')
+            print('Using an alternative format')
+        return test_res[0]
 
-        fallback_resolution = resolution[len(resolution)-1]
-        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-        print('There was no resolution match available')
-        print('Trying the lowest resolution: ' + str(fallback_resolution[0]) + 'x' + str(fallback_resolution[1]))
-        print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-        return fallback_resolution[0], fallback_resolution[1]
+    #  Test for next available resolution
+    for res in available_resolutions:
+        if res[0] <= requested_width and res[1] <= requested_height:  # Get the first match
+            lower_width = res[0]
+            lower_height = res[1]
+            print('The requested size was not available')
+            print('Using a smaller size: ' + str(lower_width) + 'x' + str(lower_height))
+            test_res = [res for res in available_resolutions if lower_width == res[0] and lower_height == res[1]]
+            if test_res:
+                test_format = [form[2] for form in test_res if format == form[2]]
+                if test_format:
+                    print('The requested format: ' +  format + ' is available')
+                    alternate_res = [lower_width, lower_height, format]
+                    return alternate_res
+                else:
+                    print('The requested format: ' + format + ' is not available')
+                    print('Using an alternative format')
+                    return test_res[0]
+
+    # Nothing matches use lowest default value
+    fallback_resolution = [resolution[len(resolution)-1][0], resolution[len(resolution)-1][1], 'YUY2']
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+    print('There was no resolution match available')
+    print('Trying the lowest default: ' + str(fallback_resolution[0]) + 'x' + str(fallback_resolution[1]) + '(' + fallback_resolution[2] + ')')
+    print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+    return fallback_resolution
 
 def setResolution(size):
-    width, height = getResolution(size)
     global stream
-    print('Setting the camera resolution to: ' + str(width) + 'x' + str(height))
+    selected_format = getResolution(size)
+    width = selected_format[0]
+    height = selected_format[1]
+    format = selected_format[2]
+    global stream
+    print('Setting the camera resolution to: ' + str(width) + 'x' + str(height) + '(' + format + ')')
+    stream = cv2.VideoCapture(int(camera))
     stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    fourcc = cv2.VideoWriter_fourcc(*format)
+    stream.set(cv2.CAP_PROP_FOURCC, fourcc)
     stream.set(cv2.CAP_PROP_FPS, 12)  #  Should be a reasonable number
 
 def checkIP():
@@ -174,6 +224,7 @@ def checkIP():
         shut_down()
 
 def shut_down():
+    stream.release()
     time.sleep(1)  # give pending actions a chance to finish
     print('\nThe program has been terminated by a user request')
     os.kill(thisinstancepid, 9)
@@ -191,7 +242,7 @@ if __name__ == "__main__":
 
     signal.signal(signal.SIGINT, quit_gracefully)
 
-    global host, port, rotate, camera, thisinstancepid, stream, camwidth
+    global host, port, rotate, camera, size, format
 
     thisinstancepid = os.getpid()
 
@@ -199,6 +250,7 @@ if __name__ == "__main__":
 
     # What cameras are available
     available_cameras = []
+    print('Version: ' + videostream_version)
     print('\nScanning for available Cameras')
     for index in range(10):
         stream = cv2.VideoCapture(index)
@@ -219,7 +271,7 @@ if __name__ == "__main__":
 
     if camera in available_cameras:
         print('\nOpening camera with identifier: '+ camera)
-        stream = cv2.VideoCapture(int(camera))
+        #stream = cv2.VideoCapture(int(camera))
         setResolution(size)
     else:
         if camera == '':
