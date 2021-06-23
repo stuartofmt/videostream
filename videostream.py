@@ -5,8 +5,6 @@
 # Released under The MIT License. Full text available via https://opensource.org/licenses/MIT
 # Updated to use threadingHTTPServer and SimpleHTTPhandler
 
-videostream_version = '1.1.0'
-
 import argparse
 import cv2
 import imutils
@@ -17,7 +15,7 @@ import os
 import time
 import signal
 
-streamVersion = '1.0.0'
+streamVersion = '1.1.1'
 
 
 def init():
@@ -34,6 +32,7 @@ def init():
     parser.add_argument('-camera', type=str, nargs=1, default=[''], help='camera index.')
     parser.add_argument('-size', type=int, nargs=1, default=[0], help='image resolution')
     parser.add_argument('-format', type=str, nargs=1, default=['MJPG'], help='Preferred format')
+
     args = vars(parser.parse_args())
 
     global host, port, rotate, camera, size, format, allowed_formats
@@ -45,11 +44,12 @@ def init():
     size = abs(args['size'][0])
 
     format = args['format'][0]
-    allowed_formats = ('BGR3', 'YUY2', 'MJPG','JPEG')
+    allowed_formats = ('BGR3', 'YUY2', 'MJPG', 'JPEG')
     if format not in allowed_formats:
         print(format + 'is not an allowed format')
         format = 'MJPG'
         print('Setting to ' + format)
+
 
 class StreamingHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -68,7 +68,7 @@ class StreamingHandler(SimpleHTTPRequestHandler):
             try:
                 while True:
                     ret, buffer = stream.read()
-                    width = buffer.shape[1]
+                    #  width = buffer.shape[1]
                     if rotate != '0':
                         buffer = imutils.rotate(buffer, int(rotate))
                     _, frame = cv2.imencode(".jpg", buffer)
@@ -80,10 +80,10 @@ class StreamingHandler(SimpleHTTPRequestHandler):
                         self.wfile.write(frame)
                         self.wfile.write(b'\r\n')
                     except Exception as e:
-                        print('\nClient Disconnected')
+                        print('\nClient Disconnected with message ' + str(e))
                         break
             except Exception as e:
-                print('\nRemoved client from ' + str(self.client_address) + ' with error ' + str(e))
+                print('\nRemoved client from ' + str(self.client_address) + ' with message ' + str(e))
         elif self.path == '/terminate':
             self.send_response(200)
             self.end_headers()
@@ -92,8 +92,9 @@ class StreamingHandler(SimpleHTTPRequestHandler):
             self.send_error(404)
             self.end_headers()
 
+
 def getResolution(size):
-    resolution = []  #  Note: needs to be ordered in size to support later comparisons
+    resolution = []                  # Note: needs to be ordered in size to support later comparisons
     resolution.append([2048, 1080])  # Default
     resolution.append([1920, 1800])
     resolution.append([1280, 720])
@@ -101,7 +102,7 @@ def getResolution(size):
     resolution.append([720, 480])
     resolution.append([640, 480])
     resolution.append([320, 240])
-    allowed_formats = ('BGR3', 'YUY2', 'MJPG','JPEG')
+    #  Allowed_formats = ('BGR3', 'YUY2', 'MJPG','JPEG')
 
     available_resolutions = []
     available_resolutions_str = []
@@ -114,7 +115,7 @@ def getResolution(size):
             stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
             stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
             fourcc = cv2.VideoWriter_fourcc(*form)
-            stream.set(cv2.CAP_PROP_FOURCC,fourcc)
+            stream.set(cv2.CAP_PROP_FOURCC, fourcc)
             camwidth = int(stream.get(cv2.CAP_PROP_FRAME_WIDTH))
             camheight = int(stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
             cc = stream.get(cv2.CAP_PROP_FOURCC)
@@ -126,7 +127,7 @@ def getResolution(size):
             stream.release()
     print('The following resolutions are available from the camera: ' + '  '.join(available_resolutions_str))
 
-    if size > len(resolution)-1: # Make sure the index is within bounds
+    if size > len(resolution)-1:     # Make sure the index is within bounds
         size = len(resolution)-1
         print('Selected size is not available. Defaulting to the smallest size')
 
@@ -159,7 +160,7 @@ def getResolution(size):
             if test_res:
                 test_format = [form[2] for form in test_res if format == form[2]]
                 if test_format:
-                    print('The requested format: ' +  format + ' is available')
+                    print('The requested format: ' + format + ' is available')
                     alternate_res = [lower_width, lower_height, format]
                     return alternate_res
                 else:
@@ -175,6 +176,7 @@ def getResolution(size):
     print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
     return fallback_resolution
 
+
 def setResolution(size):
     global stream
     selected_format = getResolution(size)
@@ -188,11 +190,13 @@ def setResolution(size):
     stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     fourcc = cv2.VideoWriter_fourcc(*format)
     stream.set(cv2.CAP_PROP_FOURCC, fourcc)
-    stream.set(cv2.CAP_PROP_FPS, 12)  #  Should be a reasonable number
+    stream.set(cv2.CAP_PROP_FPS, 24)        # Should be a reasonable number
+    stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Just to keep things tidy and small
+
 
 def checkIP():
     #  Start the web server
-    if (port != 0):
+    if port != 0:
         #  Get the local ip address
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
@@ -223,6 +227,7 @@ def checkIP():
         print('\nNo port number was provided - terminating the program')
         shut_down()
 
+
 def shut_down():
     stream.release()
     time.sleep(1)  # give pending actions a chance to finish
@@ -250,13 +255,13 @@ if __name__ == "__main__":
 
     # What cameras are available
     available_cameras = []
-    print('Version: ' + videostream_version)
+    print('Version: ' + streamVersion)
     print('\nScanning for available Cameras')
     for index in range(10):
         stream = cv2.VideoCapture(index)
         if stream.isOpened():
-            available_cameras.append(str(index)) # using string for convenience
-            stream.release()
+            available_cameras.append(str(index))   # using string for convenience
+        stream.release()
     print('\n')
 
     if len(available_cameras) < 1:
@@ -267,11 +272,10 @@ if __name__ == "__main__":
 
     if len(available_cameras) == 1 and camera == '':
         print('No camera was specified but one camera was found and will be used')
-        camera = available_cameras[0] # If nothing specified - try the only available camera
+        camera = available_cameras[0]   # If nothing specified - try the only available camera
 
     if camera in available_cameras:
-        print('\nOpening camera with identifier: '+ camera)
-        #stream = cv2.VideoCapture(int(camera))
+        print('\nOpening camera with identifier: ' + camera)
         setResolution(size)
     else:
         if camera == '':

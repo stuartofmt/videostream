@@ -13,8 +13,11 @@ It is particularly useful when you want to same video feed to be consumed by mor
 ###Version 1.1.0
 
 [1]  Improved the detection of size and formats
+
 [2]  Can now select a preferred format
-[3]  Improved the fallback to a lower size if the selected size is not available
+
+[3]  Improved the fallback to a lower size if the selected size is not available.
+
 [4]  If the preferred format is not available an available format will be used. 
 
 
@@ -34,7 +37,7 @@ The main capabilities include:
 
 * Python3 (should be accessible without specifying the path)
 * Linux OS,  Windows 10, Windows Subsystem Linux (WSL) tested
-* Certain python libraries.  The program will complain if they are missing.
+* Certain python libraries.  The program will complain if they are missing. **In particular OpenCV needs to be V3.4 or later.**
 
 ###Installing python libraries
 Usually, python libraries can be installed using the following command (other forms of the command can also be used):
@@ -43,7 +46,7 @@ Usually, python libraries can be installed using the following command (other fo
 python3 -m pip install [library name]
 ```
 
-One of the needed libraries is OpenCV.  This library exists in several forms and can be confusing to install.  The following form is recommended for most computers except the Raspberry Pi: 
+One of the needed libraries is OpenCV **V3.4 or later**.  This library exists in several forms and can be confusing to install.  The following form is recomended for most computers except the Raspberry Pi: 
 ```
 python3 -m pip install opencv-contrib-python
 ```
