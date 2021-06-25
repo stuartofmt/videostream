@@ -39,7 +39,10 @@ The main capabilities include:
 * Linux OS,  Windows 10, Windows Subsystem Linux (WSL) tested
 * Certain python libraries.  The program will complain if they are missing. **In particular OpenCV needs to be V3.4 or later.**
 
+---
+
 ###Installing python libraries
+
 Usually, python libraries can be installed using the following command (other forms of the command can also be used):
 
 ```
