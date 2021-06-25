@@ -6,11 +6,11 @@ It is particularly useful when you want to same video feed to be consumed by mor
 <br>videostream is designed to run continuously and can accept a http command to terminate the program.  Typically, you would use a browser but curl or other means can be used.<br>
 
 
-###Version 1.0.0
+### Version 1.0.0
 
 [1]  Initial version
 
-###Version 1.1.0
+### Version 1.1.0
 
 [1]  Improved the detection of size and formats
 
@@ -41,7 +41,7 @@ The main capabilities include:
 
 ---
 
-###Installing python libraries
+### Installing python libraries
 
 Usually, python libraries can be installed using the following command (other forms of the command can also be used):
 
@@ -184,7 +184,7 @@ Example
 -port 8090      #Causes internal http listener to start and listen on port 8090<br>
 ```
 
-####-camera [number]
+#### -camera [number]
 May be omitted if there is only one camera available.
 If there is more than one camera then the camera number needs to be specified.
 **Note that camera numbers begin at 0 (zero) for the first camera.**
@@ -194,7 +194,7 @@ Example
 -camera 2      #Causes the program to use the third camera it detects
 ```  
 
-####-rotate [number]
+#### -rotate [number]
 Defaults to 0 (zero).
 If the video from the camera does not have the right orientation the video can be rotated with this option.
 Common settings wil be 90, 180, 270
@@ -204,7 +204,7 @@ Example
 -rotate 180      #Causes the program to rotate the video 180 deg
 ```
 
-####-size [number]
+#### -size [number]
 If omitted - the program will try to determine the highest resolution your camera supports.<br>
 The available resolutions are from the list below.
 
@@ -234,7 +234,7 @@ Example
 -size 4      #Causes the program to try to use a resolution of 720 x 480
 ```
 
-####-format [option]
+#### -format [option]
 If omitted - the program will try to use MJPG.<br>
 The available formats are from the list below.
 
@@ -260,7 +260,7 @@ Example
 -host 192.168.86.10      #Causes internal http listener (if active) to listen at ip address 192.168.86.10<br>
 ```
 
-###Examples of use
+### Examples of use
 
 Start videostream.py and have it stream video on port 8081 rotated 180 deg using the only (default) camera
 
