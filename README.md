@@ -237,6 +237,7 @@ Example
 #### -format [option]
 If omitted - the program will try to use MJPG.<br>
 The available formats are from the list below.
+**Note that these are the formats from the camera.  The program streams jpeg images**
 
 
 BGR3, YUY2, MJPG, JPEG
