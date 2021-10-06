@@ -68,20 +68,23 @@ class StreamingHandler(SimpleHTTPRequestHandler):
             try:
                 while True:
                     ret, buffer = stream.read()
-                    #  width = buffer.shape[1]
-                    if rotate != '0':
-                        buffer = imutils.rotate(buffer, int(rotate))
-                    _, frame = cv2.imencode(".jpg", buffer)
-                    try:
-                        self.wfile.write(b'--FRAME\r\n')
-                        self.send_header('Content-Type', 'image/jpeg')
-                        self.send_header('Content-Length', str(len(frame)))
-                        self.end_headers()
-                        self.wfile.write(frame)
-                        self.wfile.write(b'\r\n')
-                    except Exception as e:
-                        print('\nClient Disconnected with message ' + str(e))
-                        break
+                    if ret == False:
+					    print('\nEmpty Buffer or problem getting a frame')
+					else:					
+						#  width = buffer.shape[1]
+						if rotate != '0':
+							buffer = imutils.rotate(buffer, int(rotate))
+						_, frame = cv2.imencode(".jpg", buffer)
+						try:
+							self.wfile.write(b'--FRAME\r\n')
+							self.send_header('Content-Type', 'image/jpeg')
+							self.send_header('Content-Length', str(len(frame)))
+							self.end_headers()
+							self.wfile.write(frame)
+							self.wfile.write(b'\r\n')
+						except Exception as e:
+							print('\nClient Disconnected with message ' + str(e))
+							break
             except Exception as e:
                 print('\nRemoved client from ' + str(self.client_address) + ' with message ' + str(e))
         elif self.path == '/terminate':
