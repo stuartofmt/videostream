@@ -16,7 +16,7 @@ import time
 import signal
 import threading
 
-streamVersion = '1.1.3'
+streamVersion = '1.1.4'
 
 
 def init():
@@ -33,18 +33,19 @@ def init():
     parser.add_argument('-camera', type=str, nargs=1, default=[''], help='camera index.')
     parser.add_argument('-size', type=int, nargs=1, default=[0], help='image resolution')
     parser.add_argument('-format', type=str, nargs=1, default=['MJPG'], help='Preferred format')
+    parser.add_argument('-framerate', type=int, nargs=1, default=[24], help='Frame rate')
 
     args = vars(parser.parse_args())
 
-    global host, port, rotate, camera, size, format, allowed_formats
+    global host, port, rotate, camera, size, format, framerate, allowed_formats
 
     host = args['host'][0]
     port = args['port'][0]
     rotate = args['rotate'][0]
     camera = args['camera'][0]
     size = abs(args['size'][0])
-
     format = args['format'][0]
+    framerate = abs(args['framerate'][0])
     allowed_formats = ('BGR3', 'YUY2', 'MJPG', 'JPEG')
     if format not in allowed_formats:
         print(format + 'is not an allowed format')
@@ -198,7 +199,7 @@ def setupStream(size, camera):
     stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     fourcc = cv2.VideoWriter_fourcc(*format)
     stream.set(cv2.CAP_PROP_FOURCC, fourcc)
-    stream.set(cv2.CAP_PROP_FPS, 24)        # Should be a reasonable number
+    stream.set(cv2.CAP_PROP_FPS, framerate)
     stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Just to keep things tidy and small
     return stream
 
