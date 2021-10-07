@@ -20,6 +20,14 @@ It is particularly useful when you want to same video feed to be consumed by mor
 
 [4]  If the preferred format is not available an available format will be used. 
 
+### Version 1.1.4
+
+[1]  Improved the ability to handle multiple clients
+
+[2]  Added option -framerate (defaults to 24)
+
+[3]  Added some error checking for empty frames.
+
 
 ## General Description
 
@@ -255,6 +263,15 @@ Example
 #### -host [ip address]
 If omitted the default is 0.0.0.0<br>
 Generally this can be left out (default) as it will allow connection to the http listener from localhost:<port> (locally) or from another machine with network access using <actual-ip-address-of-server-running-DuetLapse3><port>.
+
+Example
+```
+-host 192.168.86.10      #Causes internal http listener (if active) to listen at ip address 192.168.86.10<br>
+```
+
+#### -framerate [number]
+If omitted the default is 24<br>
+Generally this can be left out (default).
 
 Example
 ```
