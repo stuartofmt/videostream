@@ -14,8 +14,9 @@ import socket
 import os
 import time
 import signal
+import threading
 
-streamVersion = '1.1.1'
+streamVersion = '1.1.3'
 
 
 def init():
@@ -51,9 +52,24 @@ def init():
         print('Setting to ' + format)
 
 
+def getFrame(stream, rotate):
+    global frame
+    while True:
+        ret, buffer = stream.read()
+        if ret is False:
+            print('\n Empty Frame Detected')
+            continue  # we do not want to update frame
+        else:
+            if rotate != '0':
+                buffer = imutils.rotate(buffer, int(rotate))
+            try:
+                _, frame = cv2.imencode(".jpg", buffer)
+            except:
+                pass  # suppress errors on conversion
+
 class StreamingHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
-        global rotate, stream
+        global frame
         if 'favicon.ico' in self.path:
             return
         if self.path == '/stream':
@@ -64,27 +80,18 @@ class StreamingHandler(SimpleHTTPRequestHandler):
             self.send_header('Pragma', 'no-cache')
             self.send_header('Content-Type', 'multipart/x-mixed-replace; boundary=FRAME')
             self.end_headers()
-
             try:
                 while True:
-                    ret, buffer = stream.read()
-                    if ret == False:
-					    print('\nEmpty Buffer or problem getting a frame')
-					else:					
-						#  width = buffer.shape[1]
-						if rotate != '0':
-							buffer = imutils.rotate(buffer, int(rotate))
-						_, frame = cv2.imencode(".jpg", buffer)
-						try:
-							self.wfile.write(b'--FRAME\r\n')
-							self.send_header('Content-Type', 'image/jpeg')
-							self.send_header('Content-Length', str(len(frame)))
-							self.end_headers()
-							self.wfile.write(frame)
-							self.wfile.write(b'\r\n')
-						except Exception as e:
-							print('\nClient Disconnected with message ' + str(e))
-							break
+                    try:
+                        self.wfile.write(b'--FRAME\r\n')
+                        self.send_header('Content-Type', 'image/jpeg')
+                        self.send_header('Content-Length', str(len(frame)))
+                        self.end_headers()
+                        self.wfile.write(frame)
+                        self.wfile.write(b'\r\n')
+                    except Exception as e:
+                        print('\nClient Disconnected with message ' + str(e))
+                        break
             except Exception as e:
                 print('\nRemoved client from ' + str(self.client_address) + ' with message ' + str(e))
         elif self.path == '/terminate':
@@ -180,13 +187,11 @@ def getResolution(size):
     return fallback_resolution
 
 
-def setResolution(size):
-    global stream
+def setupStream(size, camera):
     selected_format = getResolution(size)
     width = selected_format[0]
     height = selected_format[1]
     format = selected_format[2]
-    global stream
     print('Setting the camera resolution to: ' + str(width) + 'x' + str(height) + '(' + format + ')')
     stream = cv2.VideoCapture(int(camera))
     stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
@@ -195,7 +200,7 @@ def setResolution(size):
     stream.set(cv2.CAP_PROP_FOURCC, fourcc)
     stream.set(cv2.CAP_PROP_FPS, 24)        # Should be a reasonable number
     stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Just to keep things tidy and small
-
+    return stream
 
 def checkIP():
     #  Start the web server
@@ -232,7 +237,11 @@ def checkIP():
 
 
 def shut_down():
-    stream.release()
+    global streaming
+    try:  # this should close the getframe thread
+        streaming.join(10)
+    except:
+        pass
     time.sleep(1)  # give pending actions a chance to finish
     print('\nThe program has been terminated by a user request')
     os.kill(thisinstancepid, 9)
@@ -250,7 +259,7 @@ if __name__ == "__main__":
 
     signal.signal(signal.SIGINT, quit_gracefully)
 
-    global host, port, rotate, camera, size, format
+    global host, port, rotate, camera, size, format, streaming
 
     thisinstancepid = os.getpid()
 
@@ -279,7 +288,8 @@ if __name__ == "__main__":
 
     if camera in available_cameras:
         print('\nOpening camera with identifier: ' + camera)
-        setResolution(size)
+        stream = setupStream(size, camera)  #  Set the camera parameters
+        streaming = threading.Thread(target=getFrame, args=(stream,rotate,)).start()
     else:
         if camera == '':
             print('You did not specify a camera and more than one was found.')
