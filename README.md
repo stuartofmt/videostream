@@ -64,7 +64,7 @@ python3 -m pip install opencv-contrib-python
 Due to dependencies not included in some OS versions on the Raspberry Pi - the simple command above can fail. Below is a sequence of commands that should work (Verified on Pi 3b+ with Debian Buster).
 They are taken from this article:  https://pyshine.com/How-to-install-OpenCV-in-Rasspberry-Pi/
 
- **THIS DID NOT WORK ON DEBIAN BULLSEYE - For bullseye, follow the instructions here https://singleboardbytes.com/647/install-opencv-raspberry-pi-4.htm and create a virtual environment. The location of python3 for the virtual environment is now /{path to virtual environemnt}/bin/python3 so s systemctl unit files or command line invocation will need to change**
+ **THIS DID NOT WORK ON DEBIAN BULLSEYE - For bullseye, follow the instructions here https://singleboardbytes.com/647/install-opencv-raspberry-pi-4.htm and create a virtual environment. The location of python3 for the virtual environment is now /{path to virtual environemnt}/bin/python3 so systemctl unit files or command line invocation will need to change**
 
 ```
 sudo apt-get install libhdf5-dev libhdf5-serial-dev
