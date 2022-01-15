@@ -57,6 +57,7 @@ The following should be noted:
 **These peoblems apparently do not happen with the Pi 4
 on the Pi3B with buster errors from videostream (Empty Frame Detected) occur.  These error do not occur with a USB camera - just the Pi camera**
 
+
 ---
 
 ### Installing python libraries
