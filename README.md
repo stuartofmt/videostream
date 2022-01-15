@@ -49,11 +49,14 @@ The main capabilities include:
 
 **Note - testing is usually done on a Raspberry Pi 3B+
 The following should be noted:
-Using Debian Buster - no problems have been encountered and these instructions are valid
-Using Debian Bullseye - there are problems with the Pi camera at the OS level - even when using libcamera-hello
-These peoblems apparently do not happen with the Pi 4
-on the Pi3B with buster errors from videostream (Empty Frame Detected) occur.  These error do not occur with a USB camera - kust the Pi camera
-**
+
+**Using Debian Buster - no problems have been encountered and these instructions are valid**
+
+**Using Debian Bullseye - there are problems with the Pi camera at the OS level - even when using libcamera-hello**
+
+**These peoblems apparently do not happen with the Pi 4
+on the Pi3B with buster errors from videostream (Empty Frame Detected) occur.  These error do not occur with a USB camera - just the Pi camera**
+
 ---
 
 ### Installing python libraries
