@@ -47,6 +47,13 @@ The main capabilities include:
 * Linux OS,  Windows 10, Windows Subsystem Linux (WSL) tested
 * Certain python libraries.  The program will complain if they are missing. **In particular OpenCV needs to be V3.4 or later.**
 
+**Note - testing is usually done on a Raspberry Pi 3B+
+The following should be noted:
+Using Debian Buster - no problems have been encountered and these instructions are valid
+Using Debian Bullseye - there are problems with the Pi camera at the OS level - even when using libcamera-hello
+These peoblems apparently do not happen with the Pi 4
+on the Pi3B with buster errors from videostream (Empty Frame Detected) occur.  These error do not occur with a USB camera - kust the Pi camera
+**
 ---
 
 ### Installing python libraries
