@@ -4,8 +4,8 @@ Apparently - these work fine on the rapberry pi 4 but may not work on earlier ve
 
 To get the pi camera to work requires changes to the file /boot/cmdline.txt
 
-This is the relevent section of /boot/cmdline.txt for a raspberry pi 3B+
-Note the dtoverlay= setting based on the type of pi camera and taken from the table in this post:
+This is the relevent section of /boot/cmdline.txt for a raspberry pi 3B+ using the V2 pi camera.
+Note the dtoverlay= setting depends on the type of pi camera and taken from the table in this post:
 
 https://www.raspberrypi.com/documentation/accessories/camera.html
 
