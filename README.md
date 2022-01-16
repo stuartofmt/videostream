@@ -52,11 +52,12 @@ The following should be noted:
 
 **Using Debian Buster - no problems have been encountered and these instructions are valid**
 
-**Using Debian Bullseye - there are problems with the Pi camera at the OS level - even when using libcamera-hello**
+**Using Debian Bullseye - there are problems with the Pi camera at the OS level**
 
 **These problems apparently do not happen with the Pi 4 and do not occur with a USB camera - just the Pi camera**
 
-**See the notes here https://github.com/stuartofmt/videostream/blob/master/Debian%20Bullseye%20with%20Pi%20Camera  on how to get a pi camera to work with Debian Buster a raspberry pi earlier than Pi 4 **
+**See the notes here on how to get a pi camera to work with Debian Bullseye with a Raspberry Pi earlier than Pi 4 **
+https://github.com/stuartofmt/videostream/blob/master/Debian%20Bullseye%20with%20Pi%20Camera  
 
 
 ---
