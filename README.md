@@ -54,8 +54,9 @@ The following should be noted:
 
 **Using Debian Bullseye - there are problems with the Pi camera at the OS level - even when using libcamera-hello**
 
-**These peoblems apparently do not happen with the Pi 4
-on the Pi3B with buster errors from videostream (Empty Frame Detected) occur.  These error do not occur with a USB camera - just the Pi camera**
+**These problems apparently do not happen with the Pi 4 and do not occur with a USB camera - just the Pi camera**
+
+**See the document here 
 
 
 ---
