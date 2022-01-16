@@ -1,3 +1,12 @@
+**There are several issues with Debian Bullsey on Raspberry Pi WITH THE PI CAMERA**
+
+**As of mid Jan 2022 - I have not got a satisfactory working system.**
+
+**Notes on Debian Bulleye with Raspberry Pi 3B+ and Pi V2 Camera**
+
+The following are notes are NOT a recipe for success!!!  They are simply an outline of the latest "almost there" steps.
+
+
 Debian Bullseye uses a new and different set of drivers for the Raspberry Pi cameras.
 USB cameras do not seem to be affected
 
@@ -7,7 +16,7 @@ There are two issues:
 
 (1) Raspberry Pi recognizing the camera
 
-(2) A change to the way camera cababilities are reported to videostream by the opencv library
+(2) A change to the way camera cababilities are reported and handled by the opencv library used by videostream.
 
 **Issue 1**
 
@@ -51,4 +60,5 @@ libcamera-hello
 
 **Issue 2**
 
-The camera capabilities being reported by opencv (for the Pi camera) do not work as expected.  This will be investigated, but for now, the Pi camera will likely only work with the lowest resolution.
+The camera capabilities being reported by opencv (for the Pi camera) do not work as expected.
+The display video captured by opencv is not properly rendered.
