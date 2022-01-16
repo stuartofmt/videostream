@@ -1,0 +1,21 @@
+Debian Bullseye uses a new and different set of drivers on the raspberry pi.
+
+Apparently - these work fine on the rapberry pi 4 but may not work on earlier versions
+
+To get the pi camera to work requires changes to the file /boot/cmdline.txt
+
+This is the relevent section of /boot/cmdline.txt for a raspberry pi 3B+
+Note the dtoverlay= setting based on the type of pi camera and taken from the table in this post:
+
+https://www.raspberrypi.com/documentation/accessories/camera.html
+
+[all]
+dtoverlay=vc4-kms-v3d
+dtoverlay=imx219
+gpu_mem=128
+
+[pi4]
+#dtoverlay=vc4-fkms-v3d
+# Run as fast as firmware / board allows
+#arm_boost=1
+
