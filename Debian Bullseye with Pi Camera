@@ -1,6 +1,13 @@
-Debian Bullseye uses a new and different set of drivers on the raspberry pi.
+Debian Bullseye uses a new and different set of drivers for the Raspberry Pi cameras.
+USB cameras do not seem to be affected
 
-Apparently - these work fine on the rapberry pi 4 but may not work on earlier versions
+Release 1.1.4 of videostream does not fully support Raspberry Pi cameras.
+There are two issues:
+(1) Raspberry Pi recognizing the camera
+(2) A change to the way camera cababilities are reported to videostream by the opencv library
+
+**Issue 1**
+Apparently - The Rapberry Pi cameras work correctly on the Pi4 but may not work on earlier versions.
 
 To get the pi camera to work requires changes to the file /boot/cmdline.txt
 
@@ -19,3 +26,5 @@ gpu_mem=128
 # Run as fast as firmware / board allows
 #arm_boost=1
 
+**Issue 2**
+The camera capabilities being reported by opencv (for the Pi camera) do not work as expected.  This will be investigated, but for now, the Pi camera will likely only work with the lowest resolution.
