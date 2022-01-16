@@ -56,7 +56,7 @@ The following should be noted:
 
 **These problems apparently do not happen with the Pi 4 and do not occur with a USB camera - just the Pi camera**
 
-**See the document here 
+**See the notes here https://github.com/stuartofmt/videostream/blob/master/Debian%20Bullseye%20with%20Pi%20Camera  on how to get a pi camera to work with Debian Buster a raspberry pi earlier than Pi 4 **
 
 
 ---
