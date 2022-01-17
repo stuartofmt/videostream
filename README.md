@@ -194,7 +194,7 @@ The response will give the version number at the top.
 
 videostream supports startup options in the form:
 
-python3 ./videostream.py -port [-camera] [-rotate] [-size] [-format][-host]
+python3 ./videostream.py -port [-camera] [-rotate] [-size] [-format][-host][-framerate]
 
 Each option is preceded by a dash - without any space between the dash and the option. Some options have parameters described in the square brackets.   The square brackets are NOT used in entering the options. If an option is not specified, the default used.
 
@@ -303,8 +303,14 @@ Start videostream.py and have it stream video on port 8081 rotated 90 deg using 
 
 `python3 ./videostream.py -port 8082 -camera 1 -rotate 90`
 
+  
+  ### Error Messages
+  
 At startup console messages are printed to confirm correct operation.
+
 There may be some error messages that look like this:
 VIDEOIO ERROR: V4L: can't open camera by index 1
 These can be safely ignored as they are an artifact of one of the underlying libraries.
 
+Some errors can be related to available memory and buffer sizes (e.g. Empty Frame Detected).  These can often be fixed by reducing the resolution of images (i.e. using the -size option) or reducing the frame rate (i.e. using the -framerate option).
+  
