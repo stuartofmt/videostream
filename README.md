@@ -47,6 +47,20 @@ The main capabilities include:
 * Linux OS,  Windows 10, Windows Subsystem Linux (WSL) tested
 * Certain python libraries.  The program will complain if they are missing. **In particular OpenCV needs to be V3.4 or later.**
 
+**Note - testing is usually done on a Raspberry Pi 3B+
+The following should be noted:
+
+**Using Debian Buster - no problems have been encountered and these instructions are valid**
+
+**Using Debian Bullseye - there are problems with the Pi camera at the OS level**
+
+**These problems apparently do not happen with the Pi 4 and do not occur with a USB camera - just the Pi camera**
+
+**See the notes here on how to get a pi camera to work with Debian Bullseye with a Raspberry Pi earlier than Pi 4** 
+
+https://github.com/stuartofmt/videostream/blob/master/Debian%20Bullseye%20with%20Pi%20Camera.md
+
+
 ---
 
 ### Installing python libraries
@@ -61,8 +75,10 @@ One of the needed libraries is OpenCV **V3.4 or later**.  This library exists in
 ```
 python3 -m pip install opencv-contrib-python
 ```
-Due to some dependencies not included in some OS versions on the Raspberry Pi - the simple command above can fail. Below is a sequence of commands that should work (Verified on Pi 3b+ with Debian Buster):
+Due to dependencies not included in some OS versions on the Raspberry Pi - the simple command above can fail. Below is a sequence of commands that should work (Verified on Pi 3b+ with Debian Buster).
 They are taken from this article:  https://pyshine.com/How-to-install-OpenCV-in-Rasspberry-Pi/
+
+ **THIS DID NOT WORK ON DEBIAN BULLSEYE - For bullseye, follow the instructions here https://singleboardbytes.com/647/install-opencv-raspberry-pi-4.htm and create a virtual environment. The location of python3 for the virtual environment is now /{path to virtual environemnt}/bin/python3 so systemctl unit files or command line invocation will need to change**
 
 ```
 sudo apt-get install libhdf5-dev libhdf5-serial-dev
@@ -179,7 +195,7 @@ The response will give the version number at the top.
 
 videostream supports startup options in the form:
 
-python3 ./videostream.py -port [-camera] [-rotate] [-size] [-format][-host]
+python3 ./videostream.py -port [-camera] [-rotate] [-size] [-format][-host][-framerate]
 
 Each option is preceded by a dash - without any space between the dash and the option. Some options have parameters described in the square brackets.   The square brackets are NOT used in entering the options. If an option is not specified, the default used.
 
@@ -288,8 +304,14 @@ Start videostream.py and have it stream video on port 8081 rotated 90 deg using 
 
 `python3 ./videostream.py -port 8082 -camera 1 -rotate 90`
 
+  
+  ### Error Messages
+  
 At startup console messages are printed to confirm correct operation.
+
 There may be some error messages that look like this:
 VIDEOIO ERROR: V4L: can't open camera by index 1
 These can be safely ignored as they are an artifact of one of the underlying libraries.
 
+Some errors can be related to available memory and buffer sizes (e.g. Empty Frame Detected).  These can often be fixed by reducing the resolution of images (i.e. using the -size option) or reducing the frame rate (i.e. using the -framerate option).
+  
