@@ -5,6 +5,7 @@ import time
 import imutils
 import sys
 
+
 def findCameras():
     available_cameras = []
     for index in range(0, 20):
@@ -24,7 +25,7 @@ def getResolutions(cam):
     resolution.append([720, 480])
     resolution.append([640, 480])
     resolution.append([320, 240])
-    allowed_formats = ('BGR3', 'YUY2', 'MJPG','JPEG', 'H264', 'IYUV')
+    allowed_formats = ('BGR3', 'YUY2', 'MJPG','JPEG', 'H264', 'IYUV')   
 
     available_resolutions = []
     available_resolutions_str = []
@@ -56,7 +57,7 @@ def getResolutions(cam):
                 available_resolutions_str.append(str(camwidth) + 'x' + str(camheight) + '(' + camformat + ')  ')
             stream.release()
     resolutions_str = ''.join(available_resolutions_str)
-    return resolutions_str, available_resolutions
+    return resolutions_str, available_resolutions 
 
 
 def display(cam, res):
@@ -79,9 +80,9 @@ def display(cam, res):
         return
     else:
         print('Opened camera: ' + str(cam))
-
+    
     framerate = 15
-
+    
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, res[0])
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, res[1])
     format = res[2]
@@ -94,30 +95,36 @@ def display(cam, res):
 
     timeout = 0
     starttime = time.time()
-    while  time.time() - starttime < 10:  #Display for ~10 sec
+    while  time.time() - starttime < 10:  #Display for ~10 sec 
         time.sleep(1/framerate)
-        ret, frame = cap.read()
+        ret = None
+        frame = None
+        try:
+            ret, frame = cap.read()
+        except Exception as e:
+            print('There was an error reading from the camera')
+            print(e)
         if ret is False:
             print('No Frame')
             timeout = timeout +1
             if timeout > 1:
                 print('Connection timed out')
                 break
-        else:
+        elif ret is not None:
             if frame is False:
-                print('No frame')
-            newwidth = 640
-            resized = imutils.resize(frame, width=newwidth, inter=cv2.INTER_LINEAR)
+                print('Frame was empty')                
+            newwidth = 640     
+            resized = imutils.resize(frame, width=newwidth, inter=cv2.INTER_LINEAR)    
             cv2.imshow(windowname, resized)
         if cv2.waitKey(1) != -1:
             break
 
-    cap.release()
+    cap.release() 
     cv2.destroyAllWindows()
     return
 
 def testCamera(cam):
-
+    
     resolution_str, resolutions = getResolutions(int(cam))
     print('\n\nThe following resolutions are available from camera:  ' + str(cam) + '\n\n' + resolution_str)
 
@@ -127,13 +134,13 @@ def testCamera(cam):
 ## Start of program
 
 keypress=''
-while keypress not in ['a', 'm', 'q']:
+while keypress not in ['a', 'm', 'q']:        
     print('\nSelect an option and press enter\n')
     print('(a) - automatic, will cycle through all combinations')
     print('(m) - manual, changes combinations on keypress')
     print('(q) - quit')
     keypress = input()
-
+   
 auto = False
 if keypress == 'a':
     auto = True
@@ -153,7 +160,7 @@ while keypress not in cameras and keypress != 'a':
     print('(a) - will cycle through all cameras')
     print('(n) - "n" is a camera index')
     keypress = input()
-camera = ''
+camera = ''    
 if keypress == 'a':
     pass
 else:
