@@ -4,7 +4,55 @@ import cv2
 import time
 import imutils
 import sys
+from threading import Thread
 
+class VideoStream:
+    # initialize with safe defaults
+    def __init__(self, src=0, res=[800,600,'BGR3'], frate=15, name="VideoStream"):
+        # initialize the video camera stream and read the first frame
+        # from the stream
+        self.stream = cv2.VideoCapture(src)
+        self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, res[0])
+        self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, res[1])
+        format = res[2]
+        fourcc = cv2.VideoWriter_fourcc(*format)
+        self.stream.set(cv2.CAP_PROP_FOURCC, fourcc)
+        self.stream.set(cv2.CAP_PROP_FPS, frate)
+        self.stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Just to keep things tidy and small
+        (self.grabbed, self.frame) = self.stream.read()
+
+        # initialize the thread name
+        self.name = name
+
+        # initialize the variable used to indicate if the thread should
+        # be stopped
+        self.stopped = False
+
+    def start(self):
+        # start the thread to read frames from the video stream
+        t = Thread(target=self.update, name=self.name, args=())
+        t.daemon = True
+        t.start()
+        return self
+
+    def update(self):
+        # keep looping infinitely until the thread is stopped
+        while True:
+            # if the thread indicator variable is set, stop the thread
+            if self.stopped:
+                self.stream.release()
+                return
+
+            # otherwise, read the next frame from the stream
+            (self.grabbed, self.frame) = self.stream.read()
+
+    def read(self):
+        # return the frame most recently read
+        return self.grabbed, self.frame
+
+    def stop(self):
+        # indicate that the thread should be stopped
+        self.stopped = True
 
 def findCameras():
     available_cameras = []
@@ -61,11 +109,17 @@ def getResolutions(cam):
 
 
 def display(cam, res):
+    # start the stream capture
+    framerate = 15 # keep it low for testing
+    stream = VideoStream(cam, res, framerate)
+    stream.start()
+    
+    displaytime = 15 #seconds
     print('\n\n ===============  Camera ' + str(cam) + '  ===================== \n\n')
     if auto is False:
         print('\nPress Enter to display next resolution...')
         input()
-    displaytime = 15 #seconds    
+        
     print('Will attempt to display this resolution for ' + str(displaytime) + ' seconds\n')
     print('Any keypress will close the display\n')
 
@@ -75,34 +129,20 @@ def display(cam, res):
     print('\n')
     time.sleep(1)
 
-    cap = cv2.VideoCapture(cam)
-    if not cap.isOpened:
-        print('Could not open camera: ' + str(cam))
-        cap.release()
-        return
-    
-    framerate = 15
-
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, res[0])
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, res[1])
-    format = res[2]
-    fourcc = cv2.VideoWriter_fourcc(*format)
-    cap.set(cv2.CAP_PROP_FOURCC, fourcc)
-    cap.set(cv2.CAP_PROP_FPS, framerate)
-    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Just to keep things tidy and small
     windowname = 'Camera ' + str(cam) + ' ' + str(res[0]) + ' x ' + str(res[1]) + ' format ' + str(res[2])
     #cv2.namedWindow(windowname, cv2.WINDOW_NORMAL)
+    newwidth = 640  # Display resolution width
     reads = 0
     errors = 0
     timeout = 0
     starttime = time.time()
-    while  time.time() - starttime < displaytime:  #Display for ~10 sec 
-        time.sleep(1/framerate)
+    while  time.time() - starttime < displaytime:
+        time.sleep(1/framerate) # Don't ask for frames any quicker than possible
         ret = None
         frame = None
         try:
             reads = reads + 1
-            ret, frame = cap.read()
+            ret, frame = stream.read()
         except Exception as e:
             errors = errors + 1
             if frame is None:
@@ -113,27 +153,27 @@ def display(cam, res):
             continue
         
         if ret is False or ret is None:
-            print('No Frame or timed out')
+            if timeout == 0:
+                print('Waiting')
+            print('.', end='', flush=True)
             timeout = timeout + 1
-            if timeout > 1:  # Timeouts take a while  
-                print('Connection timed out')
+            if timeout > framerate*(displaytime-1):  # Mostly no frames  
+                print('\nConnection timed out')
                 break
             continue
         else:
-            timeout = 0
-            newwidth = 640     
+            timeout = 0  # reset if it starts displaying     
             resized = imutils.resize(frame, width=newwidth, inter=cv2.INTER_LINEAR)    
             cv2.imshow(windowname, resized)
         if cv2.waitKey(1) != -1:
             break
 
-    cap.release() 
+    stream.stop() 
     cv2.destroyAllWindows()
     print('\n There were ' +str(reads) + ' reads with ' + str(errors) + ' errors and ' +  str(timeout) + ' timeouts')
     return
 
 def testCamera(cam):
-    
     resolution_str, resolutions = getResolutions(int(cam))
     if resolution_str != '':
         print('\nThe following resolutions are available from camera:  ' + str(cam) + '\n' + resolution_str)
