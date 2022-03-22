@@ -61,10 +61,12 @@ def getResolutions(cam):
 
 
 def display(cam, res):
+    print('\n\n ===============  Camera ' + str(cam) + '  ===================== \n\n')
     if auto is False:
-        print('\n\nPress Enter to display next resolution...')
+        print('\nPress Enter to display next resolution...')
         input()
-    print('Will attempt to display this resolution for 10 seconds\n')
+    displaytime = 15 #seconds    
+    print('Will attempt to display this resolution for ' + str(displaytime) + ' seconds\n')
     print('Any keypress will close the display\n')
 
     print('################################################')
@@ -78,11 +80,9 @@ def display(cam, res):
         print('Could not open camera: ' + str(cam))
         cap.release()
         return
-    else:
-        print('Opened camera: ' + str(cam))
     
     framerate = 15
-    
+
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, res[0])
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, res[1])
     format = res[2]
@@ -92,27 +92,35 @@ def display(cam, res):
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Just to keep things tidy and small
     windowname = 'Camera ' + str(cam) + ' ' + str(res[0]) + ' x ' + str(res[1]) + ' format ' + str(res[2])
     #cv2.namedWindow(windowname, cv2.WINDOW_NORMAL)
-
+    reads = 0
+    errors = 0
     timeout = 0
     starttime = time.time()
-    while  time.time() - starttime < 10:  #Display for ~10 sec 
+    while  time.time() - starttime < displaytime:  #Display for ~10 sec 
         time.sleep(1/framerate)
         ret = None
         frame = None
         try:
+            reads = reads + 1
             ret, frame = cap.read()
         except Exception as e:
-            print('There was an error reading from the camera')
-            print(e)
-        if ret is False:
-            print('No Frame')
-            timeout = timeout +1
-            if timeout > 1:
+            errors = errors + 1
+            if frame is None:
+                pass
+            else:
+                print('There was an error reading from the camera')
+                print(e)
+            continue
+        
+        if ret is False or ret is None:
+            print('No Frame or timed out')
+            timeout = timeout + 1
+            if timeout > 1:  # Timeouts take a while  
                 print('Connection timed out')
                 break
-        elif ret is not None:
-            if frame is False:
-                print('Frame was empty')                
+            continue
+        else:
+            timeout = 0
             newwidth = 640     
             resized = imutils.resize(frame, width=newwidth, inter=cv2.INTER_LINEAR)    
             cv2.imshow(windowname, resized)
@@ -121,13 +129,17 @@ def display(cam, res):
 
     cap.release() 
     cv2.destroyAllWindows()
+    print('\n There were ' +str(reads) + ' reads with ' + str(errors) + ' errors and ' +  str(timeout) + ' timeouts')
     return
 
 def testCamera(cam):
     
     resolution_str, resolutions = getResolutions(int(cam))
-    print('\n\nThe following resolutions are available from camera:  ' + str(cam) + '\n\n' + resolution_str)
-
+    if resolution_str != '':
+        print('\nThe following resolutions are available from camera:  ' + str(cam) + '\n' + resolution_str)
+    else:
+        print('\n The camera did not provide any resolution information')
+        
     for res in resolutions:
         display(int(cam), res)
 

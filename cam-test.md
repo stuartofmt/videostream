@@ -26,3 +26,4 @@ If this is being run on a Raspberry Pi with Bullseye.  Use the following form:
 ```
 libcamerify python3 ./cam-test.py 2>/dev/null
 ```
+
