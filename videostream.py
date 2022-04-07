@@ -14,9 +14,10 @@ import socket
 import os
 import time
 import signal
-import threading
+from threading import Thread
+import subprocess
 
-streamVersion = '1.1.4'
+streamVersion = '2.0.0'
 
 
 def init():
@@ -27,18 +28,22 @@ def init():
     # Environment
     parser.add_argument('-host', type=str, nargs=1, default=['0.0.0.0'],
                         help='The ip address this service listens on. Default = 0.0.0.0')
-    parser.add_argument('-port', type=int, nargs=1, default=[0],
+    parser.add_argument('-port', type=int, nargs=1, default=[8085],
                         help='Specify the port on which the server listens. Default = 0')
-    parser.add_argument('-rotate', type=str, nargs=1, default=['0'], help='Rotation. Default = 0')
+    parser.add_argument('-rotate', type=str, nargs=1, default=['0'], help='Can be 0,90,180,270. Default = 0')
     parser.add_argument('-camera', type=str, nargs=1, default=[''], help='camera index.')
     parser.add_argument('-size', type=int, nargs=1, default=[0], help='image resolution')
     parser.add_argument('-format', type=str, nargs=1, default=['MJPG'], help='Preferred format')
     parser.add_argument('-framerate', type=int, nargs=1, default=[24], help='Frame rate')
+    parser.add_argument('-pires', type=str, nargs=1, default=[''], help='pires commands for libcamera-vid')
+    parser.add_argument('-pistream', type=str, nargs=1, default=['tcp://0.0.0.0:5000'], help='Output stream. Default = tcp://0.0.0.0:5000') 
+    parser.add_argument('-debug', action='store_true', help='If omitted - limit debug messages ')
 
     args = vars(parser.parse_args())
 
     global host, port, rotate, camera, size, format, framerate, allowed_formats
-
+    global pires, rotateimage, debug, pistream
+    
     host = args['host'][0]
     port = args['port'][0]
     rotate = args['rotate'][0]
@@ -46,18 +51,125 @@ def init():
     size = abs(args['size'][0])
     format = args['format'][0]
     framerate = abs(args['framerate'][0])
-    allowed_formats = ('BGR3', 'YUY2', 'MJPG', 'JPEG')
+    allowed_formats = ('BGR3', 'YUY2', 'MJPG','JPEG', 'H264', 'IYUV')
     if format not in allowed_formats:
         print(format + 'is not an allowed format')
         format = 'MJPG'
         print('Setting to ' + format)
+    pires = args['pires'][0]
+    pistream = args['pistream'][0]
+    rotateimage = args['rotate'][0]
+    if rotateimage not in (0,90,180,270):
+        rotateimage = 0
+    if args['debug']:
+        debug = ''
+    else:
+        debug = ' 2>/dev/null'
 
+    if pires != '':
+        #Check if libcamera-vid is already in-use
+        cmd = ['pgrep', '-f', 'libcamera-vid']
+        try:
+            # exit code is zero if found
+            result = subprocess.check_call(cmd)
+            print(result)
+            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            print('libcamera-vid is already in use.')
+            print('Can be killed with kill -9 `pgrep -f libcamera-vid`')
+            print('Exiting')
+            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            sys.exit(0)
+        except subprocess.CalledProcessError as e:
+            pass
 
-def getFrame(stream, rotate):
-    global frame
-    while True:
-        ret, buffer = stream.read()
-        if ret is False:
+                
+class VideoStream:
+    # initialize with safe defaults
+    def __init__(self, src=0, res=[800,600,'MJPG'], frate=10, name="VideoStream"):
+        # initialize the video camera stream and read the first frame
+        self.stream = cv2.VideoCapture(src)
+        if isinstance(src, int):  #Bypass is stream input
+            try:
+                self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, res[0])
+                self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, res[1])
+                format = res[2]
+                fourcc = cv2.VideoWriter_fourcc(*format)
+                self.stream.set(cv2.CAP_PROP_FOURCC, fourcc)
+                self.stream.set(cv2.CAP_PROP_FPS, frate)
+            except Exeption as e:
+                print('opencv error')
+                print(e)
+        self.grabbed, self.frame = self.stream.read()
+
+        # initialize the thread name
+        self.name = name
+
+        # initialize the variable used to indicate if the thread should be stopped
+        self.stopped = False
+
+    def start(self):
+        # start the thread to read frames from the video stream
+        t = Thread(target=self.update, name=self.name, args=())
+        t.daemon = True
+        t.start()
+        return self
+
+    def update(self):
+        # keep looping infinitely until the thread is stopped
+        while True:
+            if self.stopped:
+                self.stream.release()
+                return
+
+            # otherwise, read the next frame from the stream
+            self.grabbed, self.frame = self.stream.read()
+
+    def read(self):
+        # return the frame most recently read
+        return self.grabbed, self.frame
+
+    def stop(self):
+        # indicate that the thread should be stopped
+        self.stopped = True
+
+def startPicam(cam, res, frate):
+    libcamera = 'libcamera-vid '        
+    cmdtxt = []
+    cmdtxt.append(libcamera + '-t 0')
+    cmdtxt.append(' --nopreview --inline  --listen ')
+    cmdtxt.append(res)
+    cmdtxt.append(' --framerate ' + str(framerate))
+    cmdtxt.append(' --camera ' + str(cam))
+    cmdtxt.append(' -o ' + pistream)
+    if debug != '':
+        cmdtxt.append(debug)
+    cmd = ''.join(cmdtxt)
+
+    print('\nStarting camera with this command\n')    
+    print(cmd)
+    try:
+        subprocess.Popen(cmd, shell=True, start_new_session=True)  # run the program
+    except Exception as e:
+        print('Problem starting ' + libcamera)
+        print(e)
+    #Wait for the camera to initialize    
+    delay = 10
+    print('\nWait ' + str(delay) + ' sec for libcamera-vid to start')
+    time.sleep(delay)
+
+def getFrame():
+    # stream and rotate are globals
+    loop = True
+    while loop:
+        time.sleep(1/framerate) # Don't ask for frames any quicker than needed
+        try:
+            ret, buffer = stream.read()
+        except Exception as e:
+            print('There was an error reading from the camera')
+            print(e)
+            continue
+        
+        if ret is False or ret is None:
             print('\n Empty Frame Detected')
             continue  # we do not want to update frame
         else:
@@ -65,10 +177,13 @@ def getFrame(stream, rotate):
                 buffer = imutils.rotate(buffer, int(rotate))
             try:
                 _, frame = cv2.imencode(".jpg", buffer)
+                loop = False    
             except:
                 pass  # suppress errors on conversion
+    return frame        
 
 class StreamingHandler(SimpleHTTPRequestHandler):
+    ##  Custom do_GET
     def do_GET(self):
         global frame
         if 'favicon.ico' in self.path:
@@ -84,6 +199,7 @@ class StreamingHandler(SimpleHTTPRequestHandler):
             try:
                 while True:
                     try:
+                        frame = getFrame()
                         self.wfile.write(b'--FRAME\r\n')
                         self.send_header('Content-Type', 'image/jpeg')
                         self.send_header('Content-Length', str(len(frame)))
@@ -104,16 +220,18 @@ class StreamingHandler(SimpleHTTPRequestHandler):
             self.end_headers()
 
 
-def getResolution(size):
+def getResolution(camera,size):
     resolution = []                  # Note: needs to be ordered in size to support later comparisons
-    resolution.append([2048, 1080])  # Default
+    resolution.append([3280, 2464])
+    resolution.append([2048, 1080])
     resolution.append([1920, 1800])
+    resolution.append([1640, 1232])
     resolution.append([1280, 720])
     resolution.append([800, 600])
     resolution.append([720, 480])
     resolution.append([640, 480])
     resolution.append([320, 240])
-    #  Allowed_formats = ('BGR3', 'YUY2', 'MJPG','JPEG')
+    #allowed_formats = ('BGR3', 'YUY2', 'MJPG','JPEG', 'H264', 'IYUV')
 
     available_resolutions = []
     available_resolutions_str = []
@@ -140,15 +258,13 @@ def getResolution(size):
 
     if size > len(resolution)-1:     # Make sure the index is within bounds
         size = len(resolution)-1
-        print('Selected size is not available. Defaulting to the smallest size')
+        print('Selected size is not available. Defaulting to size ' + resolutions(size))
 
     requested_width = resolution[size][0]
     requested_height = resolution[size][1]
     requested_res = [requested_width, requested_height, format]
-    print(requested_res)
     #  Test to see if we have a match in resolution
     test_res = [res for res in available_resolutions if requested_width == res[0] and requested_height == res[1]]
-    print(test_res)
     if test_res:
         print('The requested size: ' + str(requested_width) + 'x' + str(requested_height) + ' is available')
         test_format = [form[2] for form in test_res if format == form[2]]
@@ -157,7 +273,7 @@ def getResolution(size):
             return requested_res
         else:
             print('The requested format: ' + format + ' is not available')
-            print('Using an alternative format')
+            print('Using format ' + str(test_res[0][2]))
         return test_res[0]
 
     #  Test for next available resolution
@@ -188,23 +304,8 @@ def getResolution(size):
     return fallback_resolution
 
 
-def setupStream(size, camera):
-    selected_format = getResolution(size)
-    width = selected_format[0]
-    height = selected_format[1]
-    format = selected_format[2]
-    print('Setting the camera resolution to: ' + str(width) + 'x' + str(height) + '(' + format + ')')
-    stream = cv2.VideoCapture(int(camera))
-    stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-    stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-    fourcc = cv2.VideoWriter_fourcc(*format)
-    stream.set(cv2.CAP_PROP_FOURCC, fourcc)
-    stream.set(cv2.CAP_PROP_FPS, framerate)
-    stream.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Just to keep things tidy and small
-    return stream
-
 def checkIP():
-    #  Start the web server
+    #  Check to see if the requested IP and Port are available for use
     if port != 0:
         #  Get the local ip address
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -236,41 +337,12 @@ def checkIP():
         print('\nNo port number was provided - terminating the program')
         shut_down()
 
-
-def shut_down():
-    global streaming
-    try:  # this should close the getframe thread
-        streaming.join(10)
-    except:
-        pass
-    time.sleep(1)  # give pending actions a chance to finish
-    print('\nThe program has been terminated by a user request')
-    os.kill(thisinstancepid, 9)
-
-
-def quit_gracefully(*args):
-    print('\n!!!!!! Stopped by SIGINT or CTL+C  !!!!!!')
-    shut_down()
-
-
-"""
-Main Program
-"""
-if __name__ == "__main__":
-
-    signal.signal(signal.SIGINT, quit_gracefully)
-
-    global host, port, rotate, camera, size, format, streaming
-
-    thisinstancepid = os.getpid()
-
-    init()
-
+def opencvsetup(camera):
     # What cameras are available
     available_cameras = []
     print('Version: ' + streamVersion)
     print('\nScanning for available Cameras')
-    for index in range(10):
+    for index in range(10):  #Check up to 20 camera indexes
         stream = cv2.VideoCapture(index)
         if stream.isOpened():
             available_cameras.append(str(index))   # using string for convenience
@@ -289,8 +361,9 @@ if __name__ == "__main__":
 
     if camera in available_cameras:
         print('\nOpening camera with identifier: ' + camera)
-        stream = setupStream(size, camera)  #  Set the camera parameters
-        streaming = threading.Thread(target=getFrame, args=(stream,rotate,)).start()
+        return camera, getResolution(camera,size)
+        #stream = setupStream(size, camera)  #  Set the camera parameters
+        #streaming = threading.Thread(target=getFrame, args=(stream,rotate,)).start()
     else:
         if camera == '':
             print('You did not specify a camera and more than one was found.')
@@ -300,7 +373,50 @@ if __name__ == "__main__":
         print('The following cameras were detected: ' + cameralist)
         print('Terminating the program')
         sys.exit(2)
-    checkIP()
+
+def shut_down():
+    global streaming
+    try:
+        stream.stop()
+        server.stop()
+    except:
+        pass
+    time.sleep(1)  # give pending actions a chance to finish
+    print('\nThe program has been terminated')
+    os.kill(thisinstancepid, 9)
+
+
+def quit_gracefully(*args):
+    print('\n!!!!!! Stopped by SIGINT or CTL+C  !!!!!!')
+    shut_down()
+
+
+"""
+Main Program
+"""
+if __name__ == "__main__":
+
+    signal.signal(signal.SIGINT, quit_gracefully)
+
+    global host, port, rotate, camera, size, framerate, streaming, stream, server
+
+    thisinstancepid = os.getpid()
+
+    init()
+    if pires != '':
+        if camera == '':
+            camera = '0'
+        startPicam(camera, pires, framerate)
+        stream = VideoStream(pistream)
+    else:
+        camera, res = opencvsetup(camera) # May change camera number
+        stream = VideoStream(int(camera), res, framerate)
+
+    checkIP() # Check the IP and Port for http server
+    
+    #start the camera streaming
+    stream.start()
+    # Start the http server
     try:
         server = ThreadingHTTPServer((host, port), StreamingHandler)
         server.serve_forever()
