@@ -31,7 +31,9 @@ It is particularly useful when you want to same video feed to be consumed by mor
 ### Version 2.0.0
 
 [1]  Added support for Raspberry Pi Bullseye / Libcamera libraries See notes below.
+
 [2]  Added three new options specific to support libcamera -pires, -pistream and -debug
+
 [3]  Added support for additional resolutions and formats (depends on camera)
 
 
