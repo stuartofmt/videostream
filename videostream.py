@@ -17,7 +17,7 @@ import signal
 from threading import Thread
 import subprocess
 
-streamVersion = '2.0.0'
+streamVersion = '2.0.1'
 
 
 def init():
@@ -96,7 +96,7 @@ class VideoStream:
                 fourcc = cv2.VideoWriter_fourcc(*format)
                 self.stream.set(cv2.CAP_PROP_FOURCC, fourcc)
                 self.stream.set(cv2.CAP_PROP_FPS, frate)
-            except Exeption as e:
+            except Exception as e:
                 print('opencv error')
                 print(e)
         self.grabbed, self.frame = self.stream.read()
@@ -258,7 +258,7 @@ def getResolution(camera,size):
 
     if size > len(resolution)-1:     # Make sure the index is within bounds
         size = len(resolution)-1
-        print('Selected size is not available. Defaulting to size ' + resolutions(size))
+        print('Selected size is not available. Defaulting to size ' + resolution(size))
 
     requested_width = resolution[size][0]
     requested_height = resolution[size][1]
@@ -342,9 +342,9 @@ def opencvsetup(camera):
     available_cameras = []
     print('Version: ' + streamVersion)
     print('\nScanning for available Cameras')
-    for index in range(10):  #Check up to 20 camera indexes
+    for index in range(20):  #Check up to 20 camera indexes
         stream = cv2.VideoCapture(index)
-        if stream.isOpened():
+        if stream.read()[0]:  # use instead of isOpened as it confirms that iit can be read
             available_cameras.append(str(index))   # using string for convenience
         stream.release()
     print('\n')
@@ -419,6 +419,7 @@ if __name__ == "__main__":
     # Start the http server
     try:
         server = ThreadingHTTPServer((host, port), StreamingHandler)
+        server.daemon = True  # Make sure it stops when program does
         server.serve_forever()
     except KeyboardInterrupt:
         pass
