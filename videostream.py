@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # Web streaming
 
 
@@ -17,7 +19,9 @@ import signal
 from threading import Thread
 import subprocess
 
-streamVersion = '2.0.1'
+streamVersion = '2.0.2' #minor editing
+
+## Added some extra try clauses and some time.sleep to prevent runaway blocking situations
 
 
 def init():
@@ -99,7 +103,8 @@ class VideoStream:
             except Exception as e:
                 print('opencv error')
                 print(e)
-        self.grabbed, self.frame = self.stream.read()
+
+            self.grabbed, self.frame = self.stream.read()
 
         # initialize the thread name
         self.name = name
@@ -120,9 +125,14 @@ class VideoStream:
             if self.stopped:
                 self.stream.release()
                 return
-
+            time.sleep(0.5) # No need to read too often
             # otherwise, read the next frame from the stream
-            self.grabbed, self.frame = self.stream.read()
+            try:
+                self.grabbed, self.frame = self.stream.read()
+            except Exception as e:
+                print('problem updating camera')
+                print(e)
+                time.sleep(1)    
 
     def read(self):
         # return the frame most recently read
@@ -375,15 +385,18 @@ def opencvsetup(camera):
         sys.exit(2)
 
 def shut_down():
-    global streaming
+    #  global streaming
+    #  Shutdown the running threads
     try:
         stream.stop()
-        server.stop()
-    except:
-        pass
+        server.shutdown()
+    except Exception as e:
+        print('There was an error shutting down')
+        print(str(e))
+
     time.sleep(1)  # give pending actions a chance to finish
     print('\nThe program has been terminated')
-    os.kill(thisinstancepid, 9)
+    os.kill(os.getpid(), signal.SIGTERM)  # Brutal but effective
 
 
 def quit_gracefully(*args):
