@@ -16,10 +16,10 @@ import socket
 import os
 import time
 import signal
-from threading import Thread
+import threading
 import subprocess
 
-streamVersion = '2.0.2' #minor editing
+streamVersion = '2.1.0' #fixed shutdown
 
 ## Added some extra try clauses and some time.sleep to prevent runaway blocking situations
 
@@ -94,6 +94,7 @@ class VideoStream:
         self.stream = cv2.VideoCapture(src)
         if isinstance(src, int):  #Bypass is stream input
             try:
+                self.stream.set(cv2.CAP_PROP_BUFFERSIZE, 0)
                 self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, res[0])
                 self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, res[1])
                 format = res[2]
@@ -114,7 +115,7 @@ class VideoStream:
 
     def start(self):
         # start the thread to read frames from the video stream
-        t = Thread(target=self.update, name=self.name, args=())
+        t = threading.Thread(target=self.update, name=self.name, args=())
         t.daemon = True
         t.start()
         return self
@@ -193,6 +194,7 @@ def getFrame():
     return frame        
 
 class StreamingHandler(SimpleHTTPRequestHandler):
+
     ##  Custom do_GET
     def do_GET(self):
         global frame
@@ -393,10 +395,10 @@ def shut_down():
     except Exception as e:
         print('There was an error shutting down')
         print(str(e))
-
-    time.sleep(1)  # give pending actions a chance to finish
-    print('\nThe program has been terminated')
-    os.kill(os.getpid(), signal.SIGTERM)  # Brutal but effective
+    finally:
+        time.sleep(1)  # give pending actions a chance to finish
+        print('\nThe program has been terminated')
+        os.kill(os.getpid(), signal.SIGTERM)  # Brutal but effective
 
 
 def quit_gracefully(*args):
@@ -432,7 +434,9 @@ if __name__ == "__main__":
     # Start the http server
     try:
         server = ThreadingHTTPServer((host, port), StreamingHandler)
-        server.daemon = True  # Make sure it stops when program does
-        server.serve_forever()
+        threading.Thread(name='server', target=server.serve_forever, daemon=False).start()
+        #server.start()
+        #server.daemon = True  # Make sure it stops when program does
+        #server.serve_forever()
     except KeyboardInterrupt:
         pass
